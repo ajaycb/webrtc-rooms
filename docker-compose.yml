@@ -1,0 +1,23 @@
+version: "2"
+
+networks:
+  front-tier:
+    driver: bridge
+  back-tier:
+    driver: bridge
+
+services:
+  janus:
+    image: janus:0.9.2
+    command: janus
+    volumes:
+      - ./janus/etc/janus/:/usr/local/etc/janus
+      - ./janus/janus.log:/var/log/janus.log
+    ports:
+      - 8088:8088
+      - 8188:8188
+    environment:
+      - VIRTUAL_HOST=janus.my.docker:8088,janusws.my.docker:8188
+    networks:
+      - back-tier
+      - front-tier

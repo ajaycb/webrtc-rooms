@@ -1,0 +1,20 @@
+[ERR] [config.c:janus_config_parse:191]   -- Error reading configuration file 'janus.jcfg'... error 2 (No such file or directory)
+Logger plugins folder: /usr/local/lib/janus/loggers
+[WARN] 	Couldn't access logger plugins folder...
+---------------------------------------------------
+  Starting Meetecho Janus (WebRTC Server) v0.9.2
+---------------------------------------------------
+
+Checking command line arguments...
+Debug/log level is 4
+Debug/log timestamps are disabled
+Debug/log colors are enabled
+Adding 'vmnet' to the ICE ignore list...
+Using 172.22.0.2 as local IP...
+Signed-Token based authentication enabled
+Initializing recorder code
+Initializing ICE stuff (Full mode, ICE-TCP candidates disabled, half-trickle, IPv6 support disabled)
+TURN REST API backend: (disabled)
+[33m[WARN][0m Janus is deployed on a private address (172.22.0.2) but you didn't specify any STUN server! Expect trouble if this is supposed to work over the internet and not just in a LAN...
+Crypto: BoringSSL
+[35m[FATAL][0m [dtls.c:janus_dtls_load_keys:331] Error opening certificate file
