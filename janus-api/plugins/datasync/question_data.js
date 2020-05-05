@@ -1,6 +1,6 @@
 import { userInfo } from "os";
 
-const EventEmitter = require("events");
+import EventEmitter from "events";
 
 class Question {
   constructor(qd, id, title, type, options = {}) {

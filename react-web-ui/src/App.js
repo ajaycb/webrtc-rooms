@@ -1,17 +1,20 @@
-import React, { useState, useEffect } from "react";
-import { Box, Button, Collapsible, Heading, Grommet } from "grommet";
+import React, { useState } from "react";
+import {
+  Box,
+  Button,
+  Collapsible,
+  Heading,
+  Grommet,
+  TextInput,
+  Grid,
+} from "grommet";
 import { Notification } from "grommet-icons";
 import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
-
-import Room from "./components/Room";
-import Chat from "./components/Chat";
-import VideoPub from "./components/VideoPublisher";
-import { VideoPublisher } from "janus-api";
-import VideoSub from "./components/VideoSubscriber";
-import AudioBridge from "./components/AudioBridge";
-import Board from "./components/board/index";
-import WhiteBoard from "./components/WhiteBoard";
-import { Ask, Answer } from "./components/Ask";
+import { Janus } from "janus-api";
+import { FeedTypes } from "janus-api/room";
+import withRoom from "./components/room/withRoom";
+import Participants from "./components/Participants";
+import { VideoPublisher, VideoFeedConfig } from "./components/Video";
 
 const theme = {
   global: {
@@ -40,87 +43,71 @@ const AppBar = (props) => (
   />
 );
 
-const Pub = ({ user = { id: 111, name: "Ajay" } }) => (
-  <Room
-    roomId={568}
-    user={user}
-    Child={({ room }) => (
-      <div>
-        <Chat room={room} />
-        {/* <VideoPub room={room} media={{ video: "stdres" }} /> */}
+const registeredFeedTypes = new FeedTypes().register(VideoFeedConfig);
+const SimpleRoom = withRoom(
+  { url: "wss://janusws.jobsito.com" },
+  registeredFeedTypes,
+  Janus,
+  ({ room, loading, user, status, render }) => {
+    if (loading) return <div>Loading</div>;
+    if (room && room.janus) return render({ room, user });
 
-        {/* <AudioBridge room={room} /> */}
-        <Ask room={room} />
-        <WhiteBoard room={room} />
+    console.warn("nothign to render", status, room);
+  }
+);
+
+const Pub = ({ roomId, user }) => (
+  <SimpleRoom
+    roomId={roomId}
+    user={user}
+    render={({ room, user }) => (
+      <div>
+        <Participants room={room} />
+        <VideoPublisher room={room} />
       </div>
     )}
   />
 );
-const Sub = ({ user = { id: 201, name: "Foo201" } }) => (
-  <Room
-    roomId={568}
-    user={user}
-    Child={({ room }) => (
+const Sub = ({ roomId }) => {
+  let [user, setUser] = useState(null);
+  let [input, setInput] = useState("");
+
+  if (!user) {
+    return (
       <div>
-        Sub {user.name} <Chat room={room} />
-        {/* <VideoSub room={room} /> */}
-        <AudioBridge room={room} />
+        Enter your name
+        <TextInput
+          siz
+          e="medium"
+          placeholder="Name"
+          value={input}
+          onChange={(event) => setInput(event.target.value)}
+        />
+        {input && (
+          <Button
+            label="Start"
+            onClick={() => setUser({ id: input, name: input })}
+          ></Button>
+        )}
       </div>
-    )}
-  />
-);
-
-const VideoSubs = ({ room, pub }) => {
-  let [users, setUsers] = useState(pub.participants);
-  let [currentSub, setCurrentSub] = useState(null);
-  useEffect(() => {
-    let addPublisher = () => {
-      setUsers({ ...pub.participants });
-    };
-    let unsubscribePublisher = (p) => {
-      if (!pub.participants[currentSub]) {
-        setCurrentSub(null);
-      }
-      setUsers({ ...pub.participants });
-    };
-
-    pub.on("joined", addPublisher);
-    pub.on("publishers", addPublisher);
-    pub.on("unpublished", unsubscribePublisher);
-    const cleanup = () => {
-      pub.removeListener("joined", addPublisher);
-      pub.removeListener("publishers", addPublisher);
-      pub.removeListener("unpublished", unsubscribePublisher);
-    };
-    return cleanup;
-  }, [pub]);
-
+    );
+  }
   return (
     <div>
-      List {Object.entries(users).length} {currentSub ? currentSub : "no sub"}
-      {currentSub && <VideoSub room={room} feed={currentSub} />}
-      {Object.values(users).map((u) => (
-        <div onClick={() => setCurrentSub(u.id)} key={u.id}>
-          {JSON.stringify(u)}
-        </div>
-      ))}
+      Hi {user.name}
+      <SimpleRoom
+        roomId={roomId}
+        user={user}
+        render={({ room }) => (
+          <div>
+            <div>
+              <Participants room={room} />
+            </div>
+          </div>
+        )}
+      />
     </div>
   );
-};
-
-const VideoPubSubChild = ({ room }) => {
-  const [pub, setPub] = useState(new VideoPublisher(room));
-
-  return (
-    <div key={"d1"}>
-      Sub {room.user.name} <Chat key={"p2"} room={room} />
-      <VideoPub key={"p1"} room={room} videoPublisher={pub} />
-      {pub && <VideoSubs room={room} pub={pub} />}
-    </div>
-  );
-};
-const VideoPubSub = ({ user = { id: 201, name: "Foo201" } }) => {
-  return <Room key={568} roomId={568} user={user} Child={VideoPubSubChild} />;
 };
 
 function App() {
@@ -141,35 +128,24 @@ function App() {
           <Box direction="row" flex overflow={{ horizontal: "hidden" }}>
             <Box flex align="center" justify="center">
               <Switch>
-                <Route path="/publish">
-                  <Pub />
+                <Route path="/publish1">
+                  <Pub roomId={568} user={{ id: 101, name: "Moderator-1" }} />
                 </Route>
-                <Route path="/subscribe1">
-                  <Sub user={{ id: 201, name: "Sub1" }} />
+                <Route path="/publish2">
+                  <Pub roomId={568} user={{ id: 102, name: "Moderator-2" }} />
                 </Route>
-                <Route path="/subscribe2">
-                  <Sub user={{ id: 202, name: "Sub2" }} />
-                </Route>
-                <Route path="/subscribe3">
-                  <Sub user={{ id: 203, name: "Sub3" }} />
-                </Route>
-                <Route path="/video1">
-                  <VideoPubSub user={{ id: 301, name: "Video1" }} />
-                </Route>
-                <Route path="/canvas">
-                  <Board />
-                </Route>
-                <Route path="/canvas_sub">
-                  <Room
+                <Route path="/sub">
+                  <Sub roomId={568} />
+                  {/* <WithRoom
                     roomId={568}
                     user={{ id: 301, name: "Canvas301" }}
-                    Child={({ room }) => (
+                    render={({ room }) => (
                       <div>
                         <Answer room={room} />
                         <WhiteBoard room={room} showTools={false} />
                       </div>
                     )}
-                  />
+                  /> */}
                 </Route>
                 <Route path="/">
                   <nav>
@@ -178,25 +154,13 @@ function App() {
                         <Link to="/">Home</Link>
                       </li>
                       <li>
-                        <Link to="/publish">Pub </Link>
+                        <Link to="/publish1">Pub 1 </Link>
                       </li>
                       <li>
-                        <Link to="/subscribe1">subscribe 1</Link>
+                        <Link to="/publish2">Pub 2 </Link>
                       </li>
                       <li>
-                        <Link to="/subscribe2">subscribe 2</Link>
-                      </li>
-                      <li>
-                        <Link to="/subscribe3">subscribe 3</Link>
-                      </li>
-                      <li>
-                        <Link to="/video1">Video 1</Link>
-                      </li>
-                      <li>
-                        <Link to="/canvas">Canvas Pub</Link>
-                      </li>
-                      <li>
-                        <Link to="/canvas_sub">Canvas Sub</Link>
+                        <Link to="/sub">Sub</Link>
                       </li>
                     </ul>
                   </nav>

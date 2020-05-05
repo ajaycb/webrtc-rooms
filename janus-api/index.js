@@ -1,15 +1,16 @@
-import Room from "./src/room";
+import Room from "./room";
 
 export default Room;
 
-import AudioBridge from "./src/plugins/audio_bridge";
-import ChatData from "./src/plugins/chat_data";
-import TextRoom from "./src/plugins/text_room";
-import VideoPublisher from "./src/plugins/video_publisher";
-import VideoSubscriber from "./src/plugins/video_subscriber";
-import WhiteBoardData from "./src/plugins/whiteboard_data";
-import QuestionData from "./src/plugins/question_data";
-import Janus from "./src/janus";
+import AudioBridge from "./plugins/audio_bridge";
+import TextRoom from "./plugins/text_room";
+import VideoPublisher from "./plugins/video_publisher";
+import VideoSubscriber from "./plugins/video_subscriber";
+
+import WhiteBoardData from "./plugins/datasync/whiteboard_data";
+import QuestionData from "./plugins/datasync/question_data";
+import ChatData from "./plugins/datasync/chat_data";
+import Janus from "./janus";
 
 export {
   AudioBridge,

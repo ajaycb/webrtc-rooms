@@ -1,6 +1,4 @@
-import { userInfo } from "os";
-
-const EventEmitter = require("events");
+import EventEmitter from "events";
 
 class WhiteboardData extends EventEmitter {
   constructor(room) {

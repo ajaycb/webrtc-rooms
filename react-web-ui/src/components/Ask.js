@@ -63,7 +63,7 @@ const Ask = ({ room }) => {
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [answers, setAnswers] = useState({});
   const [questionData, setQuestionData] = useState(null);
-  console.warn("re-rendering", currentQuestion, answers);
+
   useEffect(() => {
     let qd = new QuestionData(room);
     setQuestionData(qd);

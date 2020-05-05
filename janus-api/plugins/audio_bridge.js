@@ -1,4 +1,4 @@
-const EventEmitter = require("events");
+import EventEmitter from "events";
 
 class AudioBridge extends EventEmitter {
   constructor(room) {

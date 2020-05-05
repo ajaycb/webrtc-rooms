@@ -142,10 +142,10 @@ class TextRoom {
                 username: "" + this.room.user.id,
                 display: this.room.user.name,
               };
+              console.log("joinign room", request);
               this.plugin.data({
                 text: JSON.stringify(request),
                 success: (data) => {
-                  console.debug("Textroom Publisher joined", this.room.room_id);
                   resolve();
                   this.room.emit("data_channel_ready", data);
                 },
@@ -154,12 +154,21 @@ class TextRoom {
           });
         },
         ondata: (data) => {
-          console.debug("We got data from the DataChannel! ");
-
           const json = JSON.parse(data);
+          console.warn("We got data from the DataChannel! ", json);
+
           const event = json.textroom;
 
-          if (event === "message") {
+          if (event === "success") {
+            if (json.participants) {
+              json.participants.forEach((p) =>
+                this.room.addParticipant({
+                  id: p.username,
+                  name: p.display,
+                })
+              );
+            }
+          } else if (event === "message") {
             let data = JSON.parse(json["text"]);
             const msg = {
               from: json["from"],
@@ -170,10 +179,18 @@ class TextRoom {
               this.room.emit(`${msg.type}_data_received`, msg);
             }
             this.room.emit("data_channel_recv_msg", msg);
+          } else if (event === "join") {
+            this.room.addParticipant({
+              id: json.username,
+              name: json.display,
+            });
+          } else if (event === "leave") {
+            this.room.removeParticipant(json.username);
           }
+
           // } else if (event === "announcement") {
-          // } else if (event === "join") {
-          // } else if (event === "leave") {
+
+          //
           // } else if (event === "kicked") {
           // } else if (event === "destroyed") {
           // }

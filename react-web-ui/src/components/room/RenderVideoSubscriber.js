@@ -3,17 +3,21 @@ import React, { useRef, useState, useEffect } from "react";
 import JanusPlayer from "./JanusPlayer";
 import { VideoSubscriber } from "janus-api";
 
-const VideoSubscriberUI = ({ room, feed, secret, pin, videoSubscriber }) => {
-  const [playerState, setPlayerState] = useState("Ready");
-  const [isMuted, setIsMuted] = useState(false);
+const RenderVideoSubscriber = ({
+  room,
+  feed,
+  secret,
+  pin,
+  videoSubscriber,
+}) => {
+  const [playerState, setPlayerState] = useState("not_ready");
   const [feedId, setFeedId] = useState(feed);
-  const [debug, set_debug] = useState("");
 
   const videoArea = useRef(null);
   let currentStream;
   useEffect(() => {
     const joined = () => {
-      setPlayerState("Paused");
+      setPlayerState("ready");
     };
     const onremotestream = (stream, param) => {
       console.warn("remote strm", param);
@@ -28,19 +32,7 @@ const VideoSubscriberUI = ({ room, feed, secret, pin, videoSubscriber }) => {
         }
       }
       if (videoSubscriber.isLive()) {
-        setPlayerState("Live");
-      }
-
-      var videoTracks = stream.getVideoTracks();
-      set_debug(
-        `Num tracks = ${videoTracks.length}. Link status ${videoSubscriber.plugin.webrtcStuff.pc.iceConnectionState}`
-      );
-      if (
-        videoTracks === null ||
-        videoTracks === undefined ||
-        videoTracks.length === 0
-      ) {
-        setPlayerState("Error");
+        setPlayerState("live");
       }
     };
     const oncleanup = () => {
