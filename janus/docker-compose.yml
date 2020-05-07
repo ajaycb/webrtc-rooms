@@ -16,8 +16,10 @@ services:
     ports:
       - 8088:8088
       - 8188:8188
+      - 7088:7088
+      - 10000-10500:10000-10500/udp
     environment:
-      - VIRTUAL_HOST=janus.my.docker:8088,janusws.my.docker:8188
+      - VIRTUAL_HOST=janus.my.docker:8088,janusws.my.docker:8188,janusadmin.my.docker:7088
     networks:
       - back-tier
       - front-tier

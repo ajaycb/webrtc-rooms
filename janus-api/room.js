@@ -17,6 +17,7 @@ class Feed {
     this.extras = extras;
     this.is_local = user.id === room.user.id;
     this.feed_type = room.feed_types.get(type);
+    this.is_live = false;
 
     if (this.feed_type) {
       this.feed_type = this.is_local
@@ -34,13 +35,25 @@ class Feed {
   init(data_provider) {
     this.data_provider = data_provider;
   }
-  makeLive() {
-    this.room.text_room.send("feed", {
+  notify(to = null) {
+    if (!this.is_live) return;
+    let payload = {
       user: this.user,
       type: this.type,
       identifier: this.identifier,
       extras: this.extras,
-    });
+    };
+
+    if (to) {
+      this.room.text_room.send_to("feed", to, payload);
+    } else {
+      this.room.text_room.send("feed", payload);
+    }
+  }
+  makeLive() {
+    this.is_live = true;
+    this.notify();
+    return this;
   }
 
   close() {
@@ -110,7 +123,11 @@ class Room extends EventEmitter {
     this.emit("participants_changed");
     return this.participants[user.id];
   }
-
+  sendParticipantMyLocalFeeds(user) {
+    this.myFeeds().forEach((feed) => {
+      feed.notify(user);
+    });
+  }
   addRemoteFeed(user, type, identifier, extras) {
     let participant = this.addParticipant(user);
     let new_feed = new Feed(this, participant.user, type, identifier, extras);
@@ -140,6 +157,11 @@ class Room extends EventEmitter {
     }
   }
 
+  myFeeds() {
+    this.addParticipant(this.user);
+    let my = this.participants[this.user.id];
+    return Object.values(my.feeds);
+  }
   findOrCreateMyFeed(type, identifier) {
     this.addParticipant(this.user);
     let feed_key = Feed.makeKey(this.user.id, type, identifier);
@@ -153,25 +175,13 @@ class Room extends EventEmitter {
     return feed;
   }
 
-  connect(cfg = {}) {
-    let baseconfig = { ...defaultConfig.janus, ...cfg };
-    return this.setupConfig(baseconfig)
-      .then((config) => {
-        return this.janusInit(config);
-      })
-      .then(() => {
-        this.text_room = new TextRoom(this);
-        return this.text_room.setup();
-      });
-  }
-
-  setupConfig(config) {
-    return new Promise((resolve, reject) => {
-      config.token =
-        "1640357383,janus,janus,janus.plugin.videoroom,janus.plugin.textroom,janus.plugin.audiobridge:lDoxqWp1jHz6R8bbrkV/CwZiCX0=";
-      resolve({ ...config });
+  connect(config) {
+    return this.janusInit(config).then(() => {
+      this.text_room = new TextRoom(this);
+      return this.text_room.setup();
     });
   }
+
   janusInit(config) {
     const Janus = this.JanusKlass;
     let room = this;

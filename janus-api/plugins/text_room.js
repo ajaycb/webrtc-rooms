@@ -122,34 +122,20 @@ class TextRoom {
         },
         ondataopen: (data) => {
           console.debug("The DataChannel is available!");
-          const request = {
-            request: "create",
-            room: this.room.room_id,
-          };
-          this.plugin.send({
-            message: request,
-            success: (data) => {
-              console.debug("Textroom created", data);
-              if (data.error_code === 418) {
-                //then its ok
-              }
-              this.room.emit("data_channel_created");
 
-              const request = {
-                textroom: "join",
-                transaction: randomString(12),
-                room: this.room.room_id,
-                username: "" + this.room.user.id,
-                display: this.room.user.name,
-              };
-              console.log("joinign room", request);
-              this.plugin.data({
-                text: JSON.stringify(request),
-                success: (data) => {
-                  resolve();
-                  this.room.emit("data_channel_ready", data);
-                },
-              });
+          const request = {
+            textroom: "join",
+            transaction: randomString(12),
+            room: this.room.room_id,
+            username: "" + this.room.user.id,
+            display: this.room.user.name,
+          };
+          console.log("joinign room", request);
+          this.plugin.data({
+            text: JSON.stringify(request),
+            success: (data) => {
+              resolve();
+              this.room.emit("data_channel_ready", data);
             },
           });
         },
@@ -184,6 +170,7 @@ class TextRoom {
               id: json.username,
               name: json.display,
             });
+            this.room.sendParticipantMyLocalFeeds(json.username);
           } else if (event === "leave") {
             this.room.removeParticipant(json.username);
           }

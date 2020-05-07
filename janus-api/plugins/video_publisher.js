@@ -39,45 +39,17 @@ class VideoPublisher extends EventEmitter {
         success: (pluginHandle) => {
           this.plugin = pluginHandle;
 
-          const create = {
-            request: "create",
-            notify_joining: true,
+          var register = {
+            request: "join",
             room: this.room.room_id,
-            secret: this.secret,
-            pin: this.pin,
-            filterDirectCandidates: true,
-            bitrate: 774144,
-            firSeconds: 10,
-            publishers: 20,
+            ptype: "publisher",
+            display: this.room.user.name,
           };
-          // send message to create new room
+
           this.plugin.send({
-            message: create,
-            success: (data) => {
-              // check if room create is okay
-              if (
-                (data.videoroom && data.videoroom === "created") ||
-                data.error_code === 427
-              ) {
-                // now register ourselves
-
-                var register = {
-                  request: "join",
-                  room: this.room.room_id,
-                  ptype: "publisher",
-                  display: this.room.user.name,
-                };
-
-                this.plugin.send({
-                  message: register,
-                  success: resolve,
-                });
-              }
-            },
-            error: (error) => {
-              console.error("Error creating room ", error);
-              reject();
-            },
+            message: register,
+            success: resolve,
+            error: reject,
           });
         },
         consentDialog: (on) => {},

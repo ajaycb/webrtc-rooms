@@ -49,44 +49,18 @@ class AudioBridge extends EventEmitter {
         opaqueId: "" + this.room.user.id,
         success: (pluginHandle) => {
           this.plugin = pluginHandle;
-
-          const create = {
-            request: "create",
-            notify_joining: true,
+          var register = {
+            request: "join",
             room: this.room.room_id,
-            secret: this.secret,
-            sampling_rate: 16000,
-            sampling: 16000,
+            id: this.room.user.id,
+            display: this.room.user.name,
             pin: this.pin,
+            muted: true,
+            ...join_opts,
           };
-          // send message to create new room
           this.plugin.send({
-            message: create,
-            success: (data) => {
-              console.log("created room", data);
-              // check if room create is okay
-              if (
-                data.audiobridge &&
-                (data.audiobridge === "created" || data.error_code === 486)
-              ) {
-                // now register ourselves
-
-                var register = {
-                  request: "join",
-                  room: this.room.room_id,
-                  id: this.room.user.id,
-                  display: this.room.user.name,
-                  pin: this.pin,
-                  muted: true,
-                  ...join_opts,
-                };
-                this.plugin.send({
-                  message: register,
-                  success: resolve,
-                });
-              }
-            },
-            error: reject,
+            message: register,
+            success: resolve,
           });
         },
         error: reject,
@@ -123,9 +97,7 @@ class AudioBridge extends EventEmitter {
                     },
                   });
                 },
-                error: (error) => {
-                  console.error("WebRTC error:", error);
-                },
+                error: reject,
               });
             } else if (event === "destroyed") {
               this.emit(event, msg, jsep);

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Button,
@@ -15,6 +15,10 @@ import { FeedTypes } from "janus-api/room";
 import withRoom from "./components/room/withRoom";
 import Participants from "./components/Participants";
 import { VideoPublisher, VideoFeedConfig } from "./components/Video";
+import {
+  WhiteBoardPublisher,
+  WhiteBoardFeedConfig,
+} from "./components/WhiteBoard";
 
 const theme = {
   global: {
@@ -43,9 +47,12 @@ const AppBar = (props) => (
   />
 );
 
-const registeredFeedTypes = new FeedTypes().register(VideoFeedConfig);
+const registeredFeedTypes = new FeedTypes()
+  .register(VideoFeedConfig)
+  .register(WhiteBoardFeedConfig);
+
 const SimpleRoom = withRoom(
-  { url: "wss://janusws.jobsito.com" },
+  "http://rooms.my.docker",
   registeredFeedTypes,
   Janus,
   ({ room, loading, user, status, render }) => {
@@ -63,6 +70,7 @@ const Pub = ({ roomId, user }) => (
     render={({ room, user }) => (
       <div>
         <Participants room={room} />
+        <WhiteBoardPublisher room={room} />
         <VideoPublisher room={room} />
       </div>
     )}
@@ -111,20 +119,12 @@ const Sub = ({ roomId }) => {
 };
 
 function App() {
-  const [showSidebar, setShowSidebar] = useState(false);
+  const [data, setData] = useState(false);
+
   return (
     <Grommet theme={theme} full>
       <Router basename={"/"}>
         <Box fill>
-          <AppBar>
-            <Heading level="3" margin="none">
-              <Link to="/">Home</Link>
-            </Heading>
-            <Button
-              icon={<Notification />}
-              onClick={() => setShowSidebar(!showSidebar)}
-            />
-          </AppBar>
           <Box direction="row" flex overflow={{ horizontal: "hidden" }}>
             <Box flex align="center" justify="center">
               <Switch>
@@ -136,16 +136,6 @@ function App() {
                 </Route>
                 <Route path="/sub">
                   <Sub roomId={568} />
-                  {/* <WithRoom
-                    roomId={568}
-                    user={{ id: 301, name: "Canvas301" }}
-                    render={({ room }) => (
-                      <div>
-                        <Answer room={room} />
-                        <WhiteBoard room={room} showTools={false} />
-                      </div>
-                    )}
-                  /> */}
                 </Route>
                 <Route path="/">
                   <nav>
@@ -167,20 +157,6 @@ function App() {
                 </Route>
               </Switch>
             </Box>
-            {showSidebar && (
-              <Collapsible direction="horizontal" open={showSidebar}>
-                <Box
-                  flex
-                  width="medium"
-                  background="light-2"
-                  elevation="small"
-                  align="center"
-                  justify="center"
-                >
-                  Sidebar
-                </Box>
-              </Collapsible>
-            )}
           </Box>
         </Box>
       </Router>

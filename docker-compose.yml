@@ -12,15 +12,15 @@ services:
       context: ./room-service
       dockerfile: Dockerfile
     command: nodemon ./bin/www
-    environment:
-      - VIRTUAL_HOST=rooms.my.docker
     volumes:
       - ./room-service:/app/src
     ports:
-      - 3000:3001
-    environment: 
+      - 3000
+    environment:
+      - VIRTUAL_HOST=rooms.my.docker
       - JANUS_ADMIN_SECRET
       - JANUS_TOKEN_SECRET
       - JANUS_URL
+      - JANUS_ADMIN_URL
     depends_on:
       - redis

@@ -19,7 +19,7 @@ class JanusAdmin {
   call(req) {
     let transaction = genTxnId();
     req.janus = "message_plugin";
-    console.log("calling", req);
+    console.log("calling", this.url, req);
     req.admin_secret = JANUS_ADMIN_SECRET;
     req.transaction = transaction;
     req.request.admin_key = JANUS_ADMIN_SECRET;
@@ -36,46 +36,7 @@ class JanusAdmin {
           request,
         });
       },
-      create(
-        room,
-        publishers = 25,
-        extras = {
-          filterDirectCandidates: true,
-          bitrate: 774144,
-          firSeconds: 20,
-        }
-      ) {
-        return this.call({ request: "create", room, publishers, ...extras });
-      },
-      edit(room, extras) {
-        return this.call({ request: "edit", room, ...extras });
-      },
-      exists(room) {
-        return this.call({ request: "exists", room });
-      },
-      list() {
-        return this.call({ request: "list" });
-      },
-      destroy(room, extras) {
-        return this.call({ request: "destroy", room, ...extras });
-      },
-      listparticipants(room, extras) {
-        return this.call({ request: "listparticipants", room, ...extras });
-      },
-    };
-    return this._textroom;
-  }
-
-  get videoroom() {
-    let ja = this;
-    this._videoroom = this._videoroom || {
-      call(request) {
-        return ja.call({
-          plugin: "janus.plugin.videoroom",
-          request,
-        });
-      },
-      create(room, extras) {
+      create(room, extras = {}) {
         return this.call({ request: "create", room, ...extras });
       },
       edit(room, extras) {
@@ -93,21 +54,38 @@ class JanusAdmin {
       listparticipants(room, extras) {
         return this.call({ request: "listparticipants", room, ...extras });
       },
+      createIfNotExists(room, extras = {}) {
+        return this.exists(room).then((result) => {
+          if (result.response.exists) {
+            return true;
+          } else {
+            return this.create(room, extras);
+          }
+        });
+      },
     };
-    return this._videoroom;
+    return this._textroom;
   }
 
-  get audiobridge() {
+  get videoroom() {
     let ja = this;
-    this._audiobridge = this._audiobridge || {
+    const videoroom_defaults = {
+      publishers: 25,
+      filterDirectCandidates: true,
+      bitrate: 774144,
+      firSeconds: 20,
+    };
+
+    this._videoroom = this._videoroom || {
       call(request) {
         return ja.call({
-          plugin: "janus.plugin.audiobridge",
+          plugin: "janus.plugin.videoroom",
           request,
         });
       },
-      create(room, sampling_rate = 16000, extras) {
-        return this.call({ request: "create", room, sampling_rate, ...extras });
+      create(room, extras = {}) {
+        extras = { ...videoroom_defaults, ...extras };
+        return this.call({ request: "create", room, ...extras });
       },
       edit(room, extras) {
         return this.call({ request: "edit", room, ...extras });
@@ -124,8 +102,66 @@ class JanusAdmin {
       listparticipants(room, extras) {
         return this.call({ request: "listparticipants", room, ...extras });
       },
+      createIfNotExists(room, extras = {}) {
+        return this.exists(room).then((result) => {
+          if (result.response.exists) {
+            return true;
+          } else {
+            return this.create(room, extras);
+          }
+        });
+      },
+    };
+    return this._videoroom;
+  }
+
+  get audiobridge() {
+    let ja = this;
+    const audiobridge_defaults = {
+      sampling_rate: 16000,
+    };
+
+    this._audiobridge = this._audiobridge || {
+      call(request) {
+        return ja.call({
+          plugin: "janus.plugin.audiobridge",
+          request,
+        });
+      },
+      create(room, extras = {}) {
+        extras = { ...audiobridge_defaults, ...extras };
+        return this.call({ request: "create", room, ...extras });
+      },
+      edit(room, extras) {
+        return this.call({ request: "edit", room, ...extras });
+      },
+      exists(room) {
+        return this.call({ request: "exists", room });
+      },
+      list() {
+        return this.call({ request: "list" });
+      },
+      destroy(room, extras) {
+        return this.call({ request: "destroy", room, ...extras });
+      },
+      listparticipants(room, extras) {
+        return this.call({ request: "listparticipants", room, ...extras });
+      },
+      createIfNotExists(room, extras = {}) {
+        return this.exists(room).then((result) => {
+          if (result.response.exists) {
+            return true;
+          } else {
+            return this.create(room, extras);
+          }
+        });
+      },
     };
     return this._audiobridge;
   }
 }
+
+const j = new JanusAdmin(process.env.JANUS_ADMIN_URL);
+
+j.textroom.createIfNotExists(1).then(console.log);
 module.exports = JanusAdmin;

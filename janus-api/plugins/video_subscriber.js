@@ -21,50 +21,16 @@ class VideoSubscriber extends EventEmitter {
         success: (pluginHandle) => {
           this.plugin = pluginHandle;
 
-          const create = {
-            request: "create",
-            notify_joining: true,
+          var subscribe = {
+            request: "join",
             room: this.room.room_id,
-            secret: this.secret,
-            pin: this.pin,
-            filterDirectCandidates: true,
-            bitrate: 774144,
-            firSeconds: 10,
-            publishers: 20,
+            ptype: "subscriber",
+            feed: id,
+            display: this.room.user.name,
           };
-          // send message to create new room
-          this.plugin.send({
-            message: create,
-            success: (data) => {
-              // check if room create is okay
-              if (
-                data.videoroom &&
-                (data.videoroom === "created" || data.error_code === 427)
-              ) {
-                // now register ourselves
 
-                var subscribe = {
-                  request: "join",
-                  room: this.room.room_id,
-                  ptype: "subscriber",
-                  feed: id,
-                  display: this.room.user.name,
-                };
-
-                // if (
-                //   Janus.webRTCAdapter.browserDetails.browser === "safari" &&
-                //   (video_codec === "vp9" ||
-                //     (video_codec === "vp8" && !Janus.safariVp8))
-                // ) {
-                //   if (video_codec) video_codec = video_codec.toUpperCase();
-                //   subscribe.offer_video = false;
-                // }
-                this.plugin.videoCodec = video_codec;
-                this.plugin.send({ message: subscribe, error: reject });
-              }
-            },
-            error: reject,
-          });
+          this.plugin.videoCodec = video_codec;
+          this.plugin.send({ message: subscribe, error: reject });
         },
         onmessage: (msg, jsep) => {
           console.debug("Got a message (subscriber) ", msg);

@@ -5,6 +5,9 @@ var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 var cors = require("cors");
 
+// const multer = require("multer"); // v1.0.5
+// const upload = multer(); // for parsing multipart/form-data
+
 var indexRouter = require("./routes/index");
 var roomsRouter = require("./routes/rooms");
 
@@ -16,8 +19,10 @@ app.set("view engine", "jade");
 
 app.use(cors());
 app.use(logger("dev"));
+
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
+
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
